@@ -8,8 +8,6 @@ knows how to ship code. Nobody has the time, or the role, to audit
 this by hand.
 
 ## What this does
-<img width="2480" height="1670" alt="Captura de pantalla 2026-08-11 002613" src="https://github.com/user-attachments/assets/2093d78c-ef3b-4469-b00f-6b5e6fd3ad58" />
-
 
 A GitHub Actions workflow that scans every Pull Request for hardcoded
 credentials (AWS keys, GitHub tokens, etc.) before they reach your
@@ -20,7 +18,7 @@ exact file, line, and commit.
 
 The check catching a test secret in a real PR:
 
-![gitleaks catching a secret](docs/gitleaks-detection.png)
+<img width="2480" height="1670" alt="Captura de pantalla 2026-08-11 002613" src="https://github.com/user-attachments/assets/2093d78c-ef3b-4469-b00f-6b5e6fd3ad58" />
 
 ## Installation
 

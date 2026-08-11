@@ -18,7 +18,7 @@ exact file, line, and commit.
 
 The check catching a test secret in a real PR:
 
-<img width="2480" height="1670" alt="Captura de pantalla 2026-08-11 002613" src="https://github.com/user-attachments/assets/2093d78c-ef3b-4469-b00f-6b5e6fd3ad58" />
+<img width="2480" height="1670" alt="Captura de pantalla 2026-08-11 002613" src="https://github.com/user-attachments/assets/2a0554f0-d21a-447b-84ca-56ca62eeb800" />
 
 ## Installation
 

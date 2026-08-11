@@ -1,2 +1,0 @@
-# archivo de prueba - config de ejemplo
-aws_access_key_id = AKIAIOSFODNN7EXAMPLE

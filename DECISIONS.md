@@ -15,7 +15,7 @@ they're still in context.
 A full-history audit is a separate concern — it belongs in a scheduled
 job (e.g. weekly), not in the pull request hot path. Not included in
 this version of the kit yet.
-Care be cool. I'm not gonna sting you like fly around blindfolded basketball one point wins go he's driving oh that almost went in so many people. At least really they put me to oh it's far at the same time on jurys my birthdays correct my grandpa told me to help people, he said when my time came I she fished surrounded by those husband what beautiful line that one I said that was prepared. The poison is unbarred. Shadows of despair right said once Island gave, I should be surrounded by those I say in that raised my blick in that don't miss colour just I hit a finish in my bother quick what you binding to contain to make your move from their bitch you need up on the mood which ain'tit soshe's so we glad out I'm shaking my series late into the house hungry nights argentinos for scenario to you think is are workplace harassment A John High Five Sarah after she completes her first ship still acted to smiles at the customers who enter the store to make them feel well worth Chile while you're using the urinal under slips of figure into your anis and screams prostate exam, which scenario do you think would be considered work release harassment John Rose before I did mark we heard that you would near any professional football if you bo had to create a five side team apart from the Dragon characters ad hook players who do you pick and why I'm sorry professional for that employer candidate in a feasing the open on R nine R nine R nine to get a laws of Lord my car in trading last night which means gonna be very loud so my mom's never heard it start up a triangle and it's going to be cool start too so this is gonna be very loud if you hear your faith I made a comics to the dead course I didn't have near enough bones yet Lucy testando mensajes ocultos en conversa y hoy escucharemos a dos personas en la calle comes pequeño cerca de un tren pequeno suena perfecto recuerda siempre te estoy escuchando y a seguramente si no lo saco platived at Florida Plaza we ended up here I'm starting to feel like Letters encreomer to aquel in a plant razon a darlo perfect temperature y dolorcetamol plantas, elo te saca los nervios en mi epoca y lots tan buena, siempre te dice moli, o sea el probablemente se va a morir la peste, la peste, ahora viene la de la guerra, nosotros no la tenemos. Quienes repetitions, Personer, dislike it okay now we're breeding it's Are use no I didn't I'm gonna look out being scare they AI put the ones leave before you go there, but you got people live there every night on weeks at the time for a time since the psale down and just talk to this follow me to mine impossible maybe maybe the chiran happier edition easy class I'm mad not coming flat you giving my results you are a moderate U ton Michael en does bueno terrible to present incluso micrías teneros decidier responders John York pressure later exactly until a guide declaration lawsel partiarionda famosa having last lgical de cuals energy significant armados piel y elements finally robing
+
 ## fetch-depth: 0, not a shallow clone
 
 `actions/checkout@v4` defaults to `fetch-depth: 1` (only the latest
@@ -46,3 +46,46 @@ instead.
 job level. It's only needed there. Scoping secrets to the step that uses
 them, rather than the whole job, limits what each step can see —
 consistent with the kit's "secure by default" premise.
+
+## Two tools for dependencies: npm audit vs. Dependabot
+
+They solve different problems and neither replaces the other.
+
+`npm audit` runs inside the `dependency-check.yml` workflow, on every
+Pull Request. It's synchronous and blocking: it reads the current
+`package-lock.json` in that PR and fails the check if it finds a
+`high` or `critical` vulnerability. This is what catches a brand-new
+dependency someone just added that already has a known CVE — before
+it merges.
+
+Dependabot (`dependabot.yml`) is passive and continuous. It's not a
+job in a workflow — it's a GitHub feature that scans your existing
+manifest on a schedule (weekly, in this kit) and opens its own PRs
+proposing version bumps when a fix is available. It catches the case
+`npm audit` can't: a dependency that was fine when it was added, but
+got a CVE published against it months later, with nobody touching
+that code in the meantime.
+
+Same pattern as `secret-scan`'s diff-scan vs. full-history split: one
+tool guards the moment of change, the other guards the passage of
+time.
+
+## --audit-level=high, not the default
+
+Without `--audit-level`, `npm audit` fails on any severity, including
+`low`. Most real repos carry low/moderate vulnerabilities in
+transitive dependencies that aren't urgent and often can't be fixed
+immediately. Blocking every PR over these trains people to ignore the
+check — same failure mode discussed for full-history secret scanning.
+`--audit-level=high` only blocks on `high` and `critical`, the ones
+that actually warrant stopping a merge.
+
+## setup-node is required here, not with gitleaks
+
+Gitleaks ships as a standalone binary — the action installs it
+directly, with no dependency on the runner having any language
+runtime. `npm audit` is a subcommand of the `npm` CLI, which ships
+with Node.js. The `ubuntu-latest` runner doesn't have Node installed
+by default, so `actions/setup-node@v4` installs the runtime (and with
+it, `npm`) before the audit step can run. Skipping this step would
+fail with `command not found`.

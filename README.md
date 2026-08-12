@@ -12,7 +12,10 @@ vulnerability gets added in month one, nobody updates it, and eight
 months later that CVE is public and your `package.json` is sitting
 right there in the repo.
 
-## Checks included
+And even with checks in place, none of it matters if anyone can push
+straight to `main`, skipping them entirely.
+
+## What's included
 
 - **`secret-scan.yml`** — scans every Pull Request for hardcoded
   credentials (AWS keys, GitHub tokens, etc.) and blocks the merge if
@@ -23,6 +26,10 @@ right there in the repo.
 - **`dependabot.yml`** — keeps your existing dependencies patched over
   time, independent of any single PR. Opens a PR automatically when a
   fix is available for something you already have installed.
+- **`scripts/setup-branch-protection.sh`** — makes the checks above
+  actually block merges. Without this, they run and report status,
+  but nothing stops a PR from merging with a failing check, or a
+  direct push to `main` that skips them altogether.
 
 ## Proof
 
@@ -37,6 +44,8 @@ dependency:
 
 ## Installation
 
+### Checks (secret-scan, dependency-check)
+
 1. In your repo, create the folder `.github/workflows/` if it doesn't
    exist yet
 2. Download the workflow(s) you want from this repo —
@@ -47,12 +56,26 @@ dependency:
    [`dependabot.yml`](.github/dependabot.yml) into `.github/` directly
    (not into `.github/workflows/`)
 4. Commit and push to any branch
-5. Open a Pull Request — the checks run automatically and block the
-   merge if they find a problem
+5. Open a Pull Request — the checks run automatically
 
 No extra configuration needed for the basic case. GitHub Actions
 detects any `.yml` file in `.github/workflows/` on its own, and
 Dependabot picks up `.github/dependabot.yml` the same way.
+
+### Branch protection (makes the checks actually block merges)
+
+1. Make sure at least one PR has already run in your repo, so the
+   check names (`diff-scan`, `audit`) are known to GitHub
+2. Download [`setup-branch-protection.sh`](scripts/setup-branch-protection.sh)
+3. Run it with your repo and the exact check names your workflows
+   report:
+   ```
+   ./setup-branch-protection.sh your-username/your-repo diff-scan audit
+   ```
+4. Confirm it worked at `https://github.com/your-username/your-repo/rules`
+
+Requires the [GitHub CLI](https://cli.github.com/) (`gh`), authenticated
+with access to the repo.
 
 ## What this does NOT do
 
@@ -67,6 +90,10 @@ Dependabot picks up `.github/dependabot.yml` the same way.
 - Doesn't auto-fix vulnerable dependencies — it blocks the PR and
   tells you what to upgrade, but the upgrade itself is manual (or
   handled separately by Dependabot's own PRs)
+- The branch protection script doesn't validate that the check names
+  you pass actually correspond to real workflows — an incorrect name
+  creates a rule that can never be satisfied. Double-check the names
+  match your workflow job names exactly.
 
 ## Design decisions
 

@@ -89,3 +89,48 @@ with Node.js. The `ubuntu-latest` runner doesn't have Node installed
 by default, so `actions/setup-node@v4` installs the runtime (and with
 it, `npm`) before the audit step can run. Skipping this step would
 fail with `command not found`.
+
+## Branch protection isn't a workflow — it's repo configuration
+
+Unlike secret-scan and dependency-check, this isn't a `.yml` file the
+buyer copies into `.github/workflows/`. It's a setting on the
+repository itself (GitHub Rulesets), so it ships as a script
+(`scripts/setup-branch-protection.sh`) that applies the configuration
+via the GitHub API instead.
+
+## Three rules, not just "require status checks"
+
+Requiring status checks alone doesn't close the gap: it only applies
+*inside* a Pull Request. Someone can still push straight to `main`,
+skipping the PR — and with it, every check that only runs on
+`pull_request`. Three rules together close this:
+
+- **`deletion`** — `main` can't be deleted by accident.
+- **`non_fast_forward`** — blocks force-pushes, so history on `main`
+  can't be silently rewritten.
+- **`pull_request`** — forces every change through a PR in the first
+  place. Without this, `required_status_checks` has nothing to attach
+  to, since a direct push never triggers a PR-based check.
+- **`required_status_checks`** — the checks (`secret-scan`,
+  `dependency-check`) actually have to pass before merging.
+
+## required_approving_review_count: 0
+
+Set to zero on purpose. This kit targets teams of 1-5 people; on a
+one-person team, requiring your own approval on every PR is
+unworkable. Approvals are left as something the buyer can raise
+themselves if their team size calls for it — not a default this kit
+imposes.
+
+## Check names are not validated against real workflows
+
+The GitHub API doesn't verify that a required status check name
+corresponds to a job that actually exists or runs in the repo. It's a
+plain string match: whatever name you pass becomes a requirement,
+whether or not any workflow reports that context. Passing an
+incorrect or misspelled check name creates a rule that can never be
+satisfied — every future PR gets blocked waiting on a check that never
+runs. The script takes check names as arguments precisely so the buyer
+supplies the exact job names from their own workflows, but it's on
+them to get those names right; there's no way to validate this
+automatically at rule-creation time.
